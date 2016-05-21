@@ -70,6 +70,9 @@ Vertex **readFiles(char *dataFile);
 ** ################ LIST INITIALIZERS ####################################
 ** #######################################################################
 */
+
+/** @complexity: Besides Malloc O(E)
+*/
 List *initBuckets(Vertex **verts){
 	List *bucket; ARLOC_A(bucket, Buckets,(C*V+1));
 	INTEGER i=0;
@@ -82,10 +85,15 @@ List *initBuckets(Vertex **verts){
 	}
 	return bucket;
 }
+
+/** @complexity: O(1) - takes first element of a Bucket
+*/
 List *pushBackQElem(List **bucket, INTEGER index, INTEGER value){
 	return bucket[index];
 }	
-// newQueueElement
+
+/** @complexity: Besides Malloc - O(1)
+*/
 List *newDQElem(Vertex *vert, List *left, List *right) {
 	List* queue = (List*) malloc(sizeof(List));
 
@@ -95,7 +103,10 @@ List *newDQElem(Vertex *vert, List *left, List *right) {
 	queue->right = right;
 	return queue;
 }
-// removeFromList
+
+/** @complexity: Since it is not NULL 
+**					O(V) for each Vertex in List
+*/
 List *deleteListElem(List *list, Vertex *vert) {
 	if(list==NULL) return NULL;
 	else {
@@ -109,18 +120,24 @@ List *deleteListElem(List *list, Vertex *vert) {
 			free(list);
 			list = right;
 		}
-	}
-	
+	}	
 	return list;
 }
-// removeFromQueue
+
+/** @complexity: Queue for Dials Buckets
+**				O(1) * O(V) since we iterate through
+**				all the buckets
+*/
 List **remDQElem(List **buckets, Vertex *vert) {
 	INTEGER minCost = vert->d;
 	buckets[minCost] = deleteListElem(buckets[minCost], vert);
-	
 	return buckets;
 }
-// addToQueue
+
+/** @complexity: O(1) since we add element between given Vertices
+**						It is a head or tail at once or
+**						append it at the end to the tail
+*/
 List **addDQElem(List **buckets, INTEGER minCost, Vertex *vert) {
 	if(vert->SET != S) {
 		if(buckets[minCost] == NULL) 
@@ -133,7 +150,10 @@ List **addDQElem(List **buckets, INTEGER minCost, Vertex *vert) {
 	}
 	return buckets;
 }
-// getMinimumElement
+
+/** @complexity: Search for first non-empty bucket
+** 		Worst case is searching through all the buckets.
+*/
 Vertex *getMinElem(List **buckets) {
 	INTEGER i;
 	for(i = lastMin; i < C; i++) {
@@ -145,7 +165,10 @@ Vertex *getMinElem(List **buckets) {
 	lastMin = C+ 1;
 	return NULL;
 }
-//
+
+/** @complexity: Besides Malloc - O(1) for initializing element
+**					for a Queue
+*/
 List *newQElem(INTEGER minCost, Vertex *vert,
 					 List *left, List *right) {
 	List* queue;
@@ -158,6 +181,8 @@ List *newQElem(INTEGER minCost, Vertex *vert,
 	return queue;
 }
 
+/** @complexity: With worst Case O(C)
+*/
 List *delQElem(List *queue, Vertex *vert) {
 	INTEGER minCost = vert->d;
 	if(queue==NULL) return NULL;
@@ -182,6 +207,8 @@ List *delQElem(List *queue, Vertex *vert) {
 	return queue;
 }
 
+/** @complexity: O(1)
+*/
 List *addQElem(List *queue, INTEGER cost, Vertex *vert) {
 	List *currentPosition = queue;	
 	if(vert->SET != S) {
@@ -224,12 +251,16 @@ List *addQElem(List *queue, INTEGER cost, Vertex *vert) {
 	return queue;
 }
 
+/** @complexity: O(1)
+*/
 Vertex *extractMin(List *queue) {
 	Vertex *vert = NULL;
 	if(queue) vert = queue->vert;
 	return vert;
 }
-// initVert
+
+/** @complexity: O(1)
+*/
 Vertex* initVertex(INTEGER id) {
 	Vertex* vert;
 	ARLOC_A(vert, Vertex,1);
@@ -239,7 +270,9 @@ Vertex* initVertex(INTEGER id) {
 	vert->adj = NULL;
 	return vert;
 }
-// clearVerts
+
+/** @complexity: O(V)
+*/
 Vertex **initAllVertices(Vertex **verts) {
 	INTEGER i=0;
 	for(i=0; i<V; i++) {
@@ -251,7 +284,8 @@ Vertex **initAllVertices(Vertex **verts) {
 	return verts;
 }
 
-// initConnection
+/** @complexity: O(1)
+*/
 Adjacent *initAdjacent(INTEGER parentId, 
 							INTEGER cost, 
 							Vertex *vert) {
@@ -263,7 +297,9 @@ Adjacent *initAdjacent(INTEGER parentId,
 	adj->nextAdj = NULL;
 	return adj;
 }
-// addNewConnection
+/** @complexity: O(V) since it is appending only when it is
+**					adjacent to other vertex
+*/
 Adjacent *addNewAdjacent(Adjacent *adjacent, 
 							  Adjacent *newConnection) {
 	if(adjacent == NULL) return newConnection;
@@ -456,10 +492,13 @@ Vertex **dijkstraP2P(Vertex **verts, INTEGER s, INTEGER t) {
 	return verts;
 }
 // ####################### DIALS ##################################################
-
+/** DIAL'S ALGORITHM :
+** * @complexity: 
+** * @complexity: 
+** * @complexity: 
+*/
 Vertex **dials(Vertex **verts, INTEGER s){
 	List **buckets = malloc(C*sizeof(List));
-	printf("!");
 	verts[s-1]->d = 0;
 	buckets = addDQElem(buckets, verts[s-1]->d, verts[s-1]);
 	while(getMinElem(buckets) != NULL) {
@@ -537,7 +576,7 @@ int main(int argc, char *argv[])
 	((errno = programchecker(argc, argv)),	_ER_CHCK(errno));
 	
 	time(&t1);
-    printf("%s",_LOG_CTIME(t1));
+    printf("%s %s %s %s, Start:%s",argv[0],argv[2],argv[4],argv[6],_LOG_CTIME(t1));
 	
 	// SAVE OUTPUT
 	INTEGER isP2PMethod = 0;
@@ -588,11 +627,11 @@ int main(int argc, char *argv[])
 			fprintf(file, "g "I_FORMAT" "I_FORMAT" %d "I_FORMAT"\n", V, E, 0, maxC);
 
 			for(i = 0; i < numOfSourceP2P; i++) {
-				if(PATH_PROB==1){ printf("%d",PATH_PROB);
+				if(PATH_PROB==1){ //printf("%d",PATH_PROB);
 				verts = dijkstraP2P(verts, pairs[i][0], pairs[i][1]);}
-				else if(PATH_PROB==2){ printf("%d",PATH_PROB);
+				else if(PATH_PROB==2){ //printf("%d",PATH_PROB);
 				verts = dialsP2P(verts, pairs[i][0], pairs[i][1]);}
-				else if(PATH_PROB==3){ printf("%d",PATH_PROB);
+				else if(PATH_PROB==3){ //printf("%d",PATH_PROB);
 				verts = radixheapP2P(verts, pairs[i][0], pairs[i][1]);}
 
 				fprintf(file, "d "I_FORMAT" "I_FORMAT" "I_FORMAT"\n", 
@@ -610,25 +649,25 @@ int main(int argc, char *argv[])
 		     		printf ("Cannot create output data file!\n");
 		     		exit(1);
 		     	}
-		    if(PATH_PROB==1){ printf("%d",PATH_PROB);
+		    if(PATH_PROB==1){ //printf("%d",PATH_PROB);
 			 fprintf(file, "p res sp ss dijkstra\n");}
-			else if(PATH_PROB==2){ printf("%d",PATH_PROB);
+			else if(PATH_PROB==2){ //printf("%d",PATH_PROB);
 			 fprintf(file, "p res sp ss dial\n");}
-			else if(PATH_PROB==3){ printf("%d",PATH_PROB);
+			else if(PATH_PROB==3){ //printf("%d",PATH_PROB);
 			 fprintf(file, "p res sp ss radixheap\n");}
 
 			fprintf(file, "f %s %s\n", dataFile, sourcesFile);
 			fprintf(file, "g "I_FORMAT" "I_FORMAT" %d "I_FORMAT"\n", V, E, 0, maxC);
 
 			struct timeval stop, start;
-			printf("...\n");
+			//printf("...\n");
 			gettimeofday(&start, NULL);
 			for(i = 0; i < numOfSeeked; i++) {
-				if(PATH_PROB==1){ printf("%d",PATH_PROB);
+				if(PATH_PROB==1){ //printf("%d",PATH_PROB);
 					verts = dijkstra(verts, sources[i]);}
-				else if(PATH_PROB==2){ printf("%d",PATH_PROB);
+				else if(PATH_PROB==2){ //printf("%d",PATH_PROB);
 					verts = dials(verts, sources[i]);}
-				else if(PATH_PROB==3){ printf("%d",PATH_PROB);
+				else if(PATH_PROB==3){ //printf("%d",PATH_PROB);
 					verts = radixheap(verts, sources[i]);}
 
 				verts = initAllVertices(verts);
@@ -642,10 +681,10 @@ int main(int argc, char *argv[])
 		}
 	}
 	time(&t2);
-	printf("%s",_LOG_CTIME(t2));
+	printf("%s %s %s %s, STOP:%s",argv[0],argv[2],argv[4],argv[6],_LOG_CTIME(t2));
 	double difference = difftime(t2, t1);
 	if(verbose)
-	(printf("%f with proc.clocks/s = %d\n",difference,CLOCKS_PER_SEC),
+	(/*printf("%f with proc.clocks/s = %d\n",difference,CLOCKS_PER_SEC)*/NULL,
 	printf("Clock's ticks in summary: %f\n", difference*CLOCKS_PER_SEC));
 	return errno;
 }
