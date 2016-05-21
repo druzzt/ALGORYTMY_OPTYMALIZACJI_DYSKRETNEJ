@@ -184,7 +184,7 @@ List **addDQElem(List **buckets, INTEGER minCost, Vertex *vert) {
 			buckets[minCost] = newDQElem(vert, NULL, NULL);
 		else {
 			// () -> A
-			List *newElement = newDQElem(vert, NULL, buckets[minCost]);
+			List *newElement = newDQElem(vert, NULL, buckets[minCost%(C+1)]);
 			buckets[minCost]->left = newElement;
 			buckets[minCost] = newElement;	
 		}
@@ -205,7 +205,7 @@ Vertex *getMinElem(List **buckets) {
 }
 
 Vertex **dials(Vertex **verts, INTEGER s){
-	List **buckets = malloc(C*V*sizeof(List));
+	List **buckets = malloc(C*V+1*sizeof(List));
 	verts[s-1]->d = 0;
 	buckets = addDQElem(buckets, verts[s-1]->d, verts[s-1]);
 	while(getMinElem(buckets) != NULL) {
@@ -231,7 +231,7 @@ Vertex **dials(Vertex **verts, INTEGER s){
 }
 
 Vertex **dialsP2P(Vertex **verts, INTEGER s, INTEGER t){
-	List **buckets = (List**)malloc(C*V*sizeof(List));
+	List **buckets = (List**)malloc(C*V+1*sizeof(List));
 	verts[s-1]->d = 0;
 	buckets = addDQElem(buckets, verts[s-1]->d, verts[s-1]);
 	while(getMinElem(buckets) != NULL) {

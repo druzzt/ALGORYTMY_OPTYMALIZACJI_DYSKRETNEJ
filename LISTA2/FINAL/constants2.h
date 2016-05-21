@@ -21,8 +21,8 @@ volatile INTEGER  V = 0,
 		 E = 0, 
 		 numOfSeeked = 0, 
 		 numOfSourceP2P = 0, 
-		 C = 0
-		 lastMin=0;;
+		 C = 0,
+		 lastMin=0;
 #endif
 
 typedef struct Bucket Bucket;
