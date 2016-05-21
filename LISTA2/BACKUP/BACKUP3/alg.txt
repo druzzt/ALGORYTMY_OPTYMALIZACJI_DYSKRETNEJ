@@ -1,0 +1,14 @@
+dist[s] ←0						(distance to source vertex is zero)
+for all v ∈ V–{s}				
+	do dist[v] ←∞ 				(set all other distances to infinity)
+S←∅								(S, the set of visited vertices is initially empty)
+Q←V								(Q, the queue initially contains all vertices) 
+ while Q ≠∅					(while the queue is not empty)
+ ￼￼do							(select the element of Q with the min. distance) 
+ 	u ← mindistance(Q,dist) 
+ 	S←S∪{u}						(add u to list of visited vertices)
+ for all v ∈ neighbors[u]
+do if dist[v] > dist[u] + w(u, v) 	(if new shortest path found)
+then d[v] ←d[u] + w(u, v) 			(set new value of shortest path) 
+									(if desired, add traceback code)
+return dist

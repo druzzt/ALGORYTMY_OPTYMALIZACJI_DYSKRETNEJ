@@ -1,0 +1,2 @@
+#define INFORM(x,y) (printf("Wrong usage of %d/%d arguments:\n %s -d plik_z_danymi.gr -ss zrodla.ss -oss wyniki.ss.res\n",y-1,6,x),abort())
+#define _ER_CHCK(x) (((x)<0) ? printf("Prog. Status: %d\n",(x)) : printf(""))
