@@ -11,7 +11,6 @@
 **	* [dijkstra|dial|radixheap] -d plik_z_danymi.gr -ss zrodla.ss -oss  wyniki.ss.res
 **	* [dijkstra|dial|radixheap] -d plik_z_danymi.gr -p2p pary.p2p -op2p wyniki.p2p.res
 */
-#pragma once
 #ifndef PROGRAMS2_C
 #define PROGRAMS2_C
 
@@ -47,11 +46,6 @@ extern Adjacent *initAdjacent(INTEGER parentId,
 					   Vertex *vert);
 extern Adjacent *addNewAdjacent(Adjacent *adjacent, 
 						 Adjacent *newConnection);
-extern List *newDQElem(Vertex *vert, List *left, List *right);
-extern List *deleteListElem(List *list, Vertex *vert);
-extern List **remDQElem(List **buckets, Vertex *vert);
-extern List **addDQElem(List **buckets, INTEGER minCost, Vertex *vert);
-extern Vertex *getMinElem(List **buckets);
 
 // #################################################################################
 /** ###################################################################
@@ -64,28 +58,90 @@ INTEGER *readSources(char *dataFile);
 INTEGER **readPairs(char *dataFile);
 Vertex **readFiles(char *dataFile);
 
-
 // #################################################################################
-/** ######################################################################
-** ################ LIST INITIALIZERS ####################################
-** #######################################################################
+/** ###################################################################
+** ############# PROGRAM BODY CLAUSES #################################
+** ####################################################################
 */
-List *initBuckets(Vertex **verts){
+
+/** DIJKSTRA'S ALGORITHM:
+** * @complexity: For single source 					O(1)*
+** * @complexity: create Queue consisting of vertexes ~ O(e)+
+** * @complexity: while Queue is not empty 			~	O(v)*
+** * @complexity: remove min element from Queue 	~	O(v)+
+** * @complexity: while every min element has cheaper neighbours ~ O(v)
+** * @complexity_SUM: O(1) * (O(e*O(1))+O(v)*O(v)) ~ O(e+v^2)
+*/
+Vertex **dijkstra(Vertex **verts, INTEGER s)
+{
+	List *queue = NULL;
+	verts[s-1]->d = 0;
+	queue = addQElem(queue, verts[s-1]->d, verts[s-1]);
+	while(queue != NULL) {
+		Vertex *minCostVert = extractMin(queue);
+		queue = delQElem(queue, minCostVert);
+		minCostVert->SET = S;
+		Adjacent *adj = minCostVert->adj;
+		while(adj != NULL) {
+			Vertex *vert = adj->vert;
+			if(vert->SET != S) {
+				if(vert->d > minCostVert->d + adj->cost) {
+					if(vert->SET == Q) queue = delQElem(queue, vert);
+					vert->d = minCostVert->d + adj->cost;
+					vert->p = minCostVert->id;
+					queue = addQElem(queue, vert->d, vert);
+					vert->SET = Q;
+				}
+			}
+			adj = adj->nextAdj;
+		}
+	}
+	return verts;
+}
+
+Vertex **dijkstraP2P(Vertex **verts, INTEGER s, INTEGER t) {
+	List *queue = NULL;
+	verts[s-1]->d = 0;
+	queue = addQElem(queue, verts[s-1]->d, verts[s-1]);
+	while(queue != NULL) {
+		Vertex *minCostVert = extractMin(queue);
+		queue = delQElem(queue, minCostVert);
+		if(minCostVert->id == t) return verts;
+		minCostVert->SET = S;
+		Adjacent *adj = minCostVert->adj;
+		while(adj != NULL) {
+			Vertex *vert = adj->vert;
+			if(vert->SET != S) {
+				if(vert->d > minCostVert->d + adj->cost) {
+					if(vert->SET == Q) queue = delQElem(queue, vert);
+					vert->d = minCostVert->d + adj->cost;
+					vert->p = minCostVert->id;
+					queue = addQElem(queue, vert->d, vert);
+					vert->SET = Q;
+				}
+			}
+			adj = adj->nextAdj;
+		}
+	}
+	return verts;
+}
+/*List *initBuckets(Vertex **verts){
 	List *bucket; ARLOC_A(bucket, Buckets,(C*V+1));
 	INTEGER i=0;
 	for(i=0;i<E;i++){
-		ARLOC_A(bucket[i].vert,Bucket,1);
-		bucket[i].vert->d = UNDEFINED;
-		bucket[i].vert->p = i;
-		bucket[i].vert->id = i;
+		ARLOC_A(bucket[i].bucket,Bucket,1);
+		bucket[i].bucket->next = NULL;
+		bucket[i].bucket->prev = NULL;
+		bucket[i].bucket->idx = i;
 		bucket[i].size = 0;
 	}
 	return bucket;
-}
-List *pushBackQElem(List **bucket, INTEGER index, INTEGER value){
+}*/
+/*List *pushBackQElem(List **bucket, INTEGER index, INTEGER value){
+	bucket[index].vert
 	return bucket[index];
-}	
-// newQueueElement
+}*/	
+
 List *newDQElem(Vertex *vert, List *left, List *right) {
 	List* queue = (List*) malloc(sizeof(List));
 
@@ -95,7 +151,7 @@ List *newDQElem(Vertex *vert, List *left, List *right) {
 	queue->right = right;
 	return queue;
 }
-// removeFromList
+
 List *deleteListElem(List *list, Vertex *vert) {
 	if(list==NULL) return NULL;
 	else {
@@ -113,14 +169,14 @@ List *deleteListElem(List *list, Vertex *vert) {
 	
 	return list;
 }
-// removeFromQueue
+
 List **remDQElem(List **buckets, Vertex *vert) {
 	INTEGER minCost = vert->d;
 	buckets[minCost] = deleteListElem(buckets[minCost], vert);
 	
 	return buckets;
 }
-// addToQueue
+
 List **addDQElem(List **buckets, INTEGER minCost, Vertex *vert) {
 	if(vert->SET != S) {
 		if(buckets[minCost] == NULL) 
@@ -133,7 +189,7 @@ List **addDQElem(List **buckets, INTEGER minCost, Vertex *vert) {
 	}
 	return buckets;
 }
-// getMinimumElement
+
 Vertex *getMinElem(List **buckets) {
 	INTEGER i;
 	for(i = lastMin; i < C; i++) {
@@ -145,7 +201,200 @@ Vertex *getMinElem(List **buckets) {
 	lastMin = C+ 1;
 	return NULL;
 }
-//
+
+Vertex **dials(Vertex **verts, INTEGER s){
+	List **buckets = malloc(C+1*sizeof(List));
+	verts[s-1]->d = 0;
+	buckets = addDQElem(buckets, verts[s-1]->d, verts[s-1]);
+	while(getMinElem(buckets) != NULL) {
+		Vertex *minCostVert = getMinElem(buckets);
+		buckets = remDQElem(buckets, minCostVert);
+		minCostVert->SET = S;
+		Adjacent *adjacent = minCostVert->adj;
+		while(adjacent != NULL) {
+			Vertex *vert = adjacent->vert;
+			if(vert->SET != S) {
+				if(vert->d > minCostVert->d + adjacent->cost) {
+					if(vert->SET == Q) buckets = remDQElem(buckets, vert);
+					vert->d = minCostVert->d + adjacent->cost;
+					vert->p = minCostVert->id;
+					buckets = addDQElem(buckets, vert->d, vert);
+					vert->SET = Q;
+				}
+			}
+			adjacent = adjacent->nextAdj;
+		}
+	}
+	return verts;
+}
+
+Vertex **dialsP2P(Vertex **verts, INTEGER s, INTEGER t){
+	List **buckets = (List**)malloc(C*sizeof(List));
+	verts[s-1]->d = 0;
+	buckets = addDQElem(buckets, verts[s-1]->d, verts[s-1]);
+	while(getMinElem(buckets) != NULL) {
+		Vertex *minCostVert = getMinElem(buckets);
+		buckets = remDQElem(buckets, minCostVert);
+		if(minCostVert->id == t) return verts;
+		minCostVert->SET = S;
+		Adjacent *adjacent = minCostVert->adj;
+		while(adjacent != NULL) {
+			Vertex *vert = adjacent->vert;
+			if(vert->SET != S) {
+				if(vert->d > minCostVert->d + adjacent->cost) {
+					if(vert->SET == Q) buckets = remDQElem(buckets, vert);
+					vert->d = minCostVert->d + adjacent->cost;
+					vert->p = minCostVert->id;
+					buckets = addDQElem(buckets, vert->d, vert);
+					vert->SET = Q;
+				}
+			}
+			adjacent = adjacent->nextAdj;
+		}
+	}
+	return verts;
+}
+
+
+Vertex **radixheap(Vertex **verts, INTEGER s){
+
+	return verts;
+}
+Vertex **radixheapP2P(Vertex **verts, INTEGER s, INTEGER t){
+
+	return verts;
+}
+
+
+// #################################################################################
+/** #######################################################################
+** #################### MAIN MODULE #######################################
+** ########################################################################
+*/
+
+int main(int argc, char *argv[])
+{
+    
+	((errno = programnamechecker(argv)),	_ER_CHCK(errno));
+	((errno = programchecker(argc, argv)),	_ER_CHCK(errno));
+	
+	time(&t1);
+    printf("%s",_LOG_CTIME(t1));
+	
+	// SAVE OUTPUT
+	INTEGER isP2PMethod = 0;
+	INTEGER i = 0;
+	char *dataFile, *sourcesFile, *resultsFile;
+	if((argc-1)%2 == 0 &&  argc > 1) {
+		for(i = 1; i<argc; i++) {
+			if(strcmp(argv[i],"-d") == 0) {
+				i++;
+				dataFile = argv[i];
+			} 
+			else if(strcmp(argv[i], "-ss") == 0) {
+				i++;
+				sourcesFile = argv[i];
+			}
+			else if(strcmp(argv[i], "-p2p") == 0) {
+				i++;
+				isP2PMethod = 1;
+				sourcesFile = argv[i];
+			}
+			else if(strcmp(argv[i], "-oss") == 0 || strcmp(argv[i], "-op2p") == 0) {
+				i++;
+				resultsFile = argv[i];
+			}
+			else {
+				printf("Incorrect parameters: %s!\n", argv[i]);
+				return 0;
+			}
+		}
+		Vertex **verts = readFiles(dataFile);
+		for(i=0; i<V; i++) {
+			Adjacent *conn;
+			conn = verts[i]->adj;
+			while (conn != NULL) {
+				conn = conn->nextAdj;
+			}
+		}
+		if(isP2PMethod) {
+			INTEGER **pairs = readPairs(sourcesFile);
+
+			FILE *file;
+		   	if ((file=fopen(resultsFile, "w"))==NULL) {
+		     		printf ("Output data file cannot be open!\n");
+		     		exit(1);
+		     	}
+			
+			fprintf(file, "f %s %s\n", dataFile, sourcesFile);
+			fprintf(file, "g "I_FORMAT" "I_FORMAT" %d "I_FORMAT"\n", V, E, 0, maxC);
+
+			for(i = 0; i < numOfSourceP2P; i++) {
+				if(PATH_PROB==1)
+				verts = dijkstraP2P(verts, pairs[i][0], pairs[i][1]);
+				else if(PATH_PROB==2)
+				verts = dialsP2P(verts, pairs[i][0], pairs[i][1]);
+				else if(PATH_PROB==3)
+				verts = radixheapP2P(verts, pairs[i][0], pairs[i][1]);
+
+				fprintf(file, "d "I_FORMAT" "I_FORMAT" "I_FORMAT"\n", 
+					pairs[i][0], pairs[i][1], verts[pairs[i][1]-1]->d);
+				verts = initAllVertices(verts);
+			}
+			fclose (file);
+		}
+		else {
+			INTEGER *sources = readSources(sourcesFile);
+			double avgTime;
+
+			FILE *file;
+		   	if ((file=fopen(resultsFile, "w"))==NULL) {
+		     		printf ("Cannot create output data file!\n");
+		     		exit(1);
+		     	}
+		     if(PATH_PROB==1)
+			fprintf(file, "p res sp ss dijkstra\n");
+			else if(PATH_PROB==2)
+			 fprintf(file, "p res sp ss dial\n");
+			else if(PATH_PROB==3)
+			 fprintf(file, "p res sp ss radixheap\n");
+			fprintf(file, "f %s %s\n", dataFile, sourcesFile);
+			fprintf(file, "g "I_FORMAT" "I_FORMAT" %d "I_FORMAT"\n", V, E, 0, maxC);
+			struct timeval stop, start;
+			gettimeofday(&start, NULL);
+			for(i = 1; i <= numOfSeeked; i++) {
+				if(PATH_PROB==1)
+				verts = dijkstra(verts, sources[i]);
+				else if(PATH_PROB==2)
+				verts = dials(verts, sources[i]);
+				else if(PATH_PROB==3)
+				verts = radixheap(verts, sources[i]);
+
+				verts = initAllVertices(verts);
+			}
+			gettimeofday(&stop, NULL);
+			double secs = 
+				((double)(stop.tv_usec - start.tv_usec) / 1000 +
+			 	 (double)(stop.tv_sec - start.tv_sec) * 1000);
+			fprintf(file, "t %lf", secs / (double)numOfSeeked);
+			fclose (file);
+		}
+	}
+	time(&t2);
+	printf("%s",_LOG_CTIME(t2));
+	double difference = difftime(t2, t1);
+	if(verbose)
+	(printf("%f with proc.clocks/s = %d\n",difference,CLOCKS_PER_SEC),
+	printf("Clock's ticks in summary: %f\n", difference*CLOCKS_PER_SEC));
+	return errno;
+}
+
+
+// #################################################################################
+/** ######################################################################
+** ################ LIST INITIALIZERS ####################################
+** #######################################################################
+*/
 List *newQElem(INTEGER minCost, Vertex *vert,
 					 List *left, List *right) {
 	List* queue;
@@ -229,7 +478,7 @@ Vertex *extractMin(List *queue) {
 	if(queue) vert = queue->vert;
 	return vert;
 }
-// initVert
+
 Vertex* initVertex(INTEGER id) {
 	Vertex* vert;
 	ARLOC_A(vert, Vertex,1);
@@ -239,7 +488,7 @@ Vertex* initVertex(INTEGER id) {
 	vert->adj = NULL;
 	return vert;
 }
-// clearVerts
+
 Vertex **initAllVertices(Vertex **verts) {
 	INTEGER i=0;
 	for(i=0; i<V; i++) {
@@ -251,7 +500,7 @@ Vertex **initAllVertices(Vertex **verts) {
 	return verts;
 }
 
-// initConnection
+
 Adjacent *initAdjacent(INTEGER parentId, 
 							INTEGER cost, 
 							Vertex *vert) {
@@ -263,7 +512,7 @@ Adjacent *initAdjacent(INTEGER parentId,
 	adj->nextAdj = NULL;
 	return adj;
 }
-// addNewConnection
+
 Adjacent *addNewAdjacent(Adjacent *adjacent, 
 							  Adjacent *newConnection) {
 	if(adjacent == NULL) return newConnection;
@@ -376,282 +625,6 @@ INTEGER *readSources(char *dataFile) {
    	fclose (file);
 	return sources;
 }
-
-
-// #################################################################################
-/** ###################################################################
-** ############# PROGRAM BODY CLAUSES #################################
-** ####################################################################
-*/
-// ####################### DIJKSTRAS ###############################################
-/** DIJKSTRA'S ALGORITHM:
-** * @complexity: For single source 					O(1)*
-** * @complexity: create Queue consisting of vertexes ~ O(e)+
-** * @complexity: while Queue is not empty 			~	O(v)*
-** * @complexity: remove min element from Queue 	~	O(v)+
-** * @complexity: while every min element has cheaper neighbours ~ O(v)
-** * @complexity_SUM: O(1) * (O(e*O(1))+O(v)*O(v)) ~ O(e+v^2)
-*/
-Vertex **dijkstra(Vertex **verts, INTEGER s)
-{
-	List *queue = NULL;
-	verts[s-1]->d = 0;
-	queue = addQElem(queue, verts[s-1]->d, verts[s-1]);
-	while(queue != NULL) {
-		Vertex *minCostVert = extractMin(queue);
-		queue = delQElem(queue, minCostVert);
-		minCostVert->SET = S;
-		Adjacent *adj = minCostVert->adj;
-		while(adj != NULL) {
-			Vertex *vert = adj->vert;
-			if(vert->SET != S) {
-				if(vert->d > minCostVert->d + adj->cost) {
-					if(vert->SET == Q) queue = delQElem(queue, vert);
-					vert->d = minCostVert->d + adj->cost;
-					vert->p = minCostVert->id;
-					queue = addQElem(queue, vert->d, vert);
-					vert->SET = Q;
-				}
-			}
-			adj = adj->nextAdj;
-		}
-	}
-	return verts;
-}
-
-/** DIJKSTRA'S ALGORITHM P2P:
-** * @complexity: For single source 					O(1)*
-** * @complexity: create Queue consisting of vertexes ~ O(e)+
-** * @complexity: while Queue is not empty 			~	O(v)*
-** * @complexity: remove min element from Queue 	~	O(v)+
-** * @complexity: while every min element has cheaper neighbours ~ O(v)
-** * @complexity_SUM: O(1) * (O(e*O(1))+O(v)*O(v)) ~ O(e+v^2)
-** * With subject to that if Vertex with MinCost is a Target Vertex
-** * algorithm ends with path to this vertex
-*/
-Vertex **dijkstraP2P(Vertex **verts, INTEGER s, INTEGER t) {
-	List *queue = NULL;
-	verts[s-1]->d = 0;
-	queue = addQElem(queue, verts[s-1]->d, verts[s-1]);
-	while(queue != NULL) {
-		Vertex *minCostVert = extractMin(queue);
-		queue = delQElem(queue, minCostVert);
-		if(minCostVert->id == t) return verts;
-		minCostVert->SET = S;
-		Adjacent *adj = minCostVert->adj;
-		while(adj != NULL) {
-			Vertex *vert = adj->vert;
-			if(vert->SET != S) {
-				if(vert->d > minCostVert->d + adj->cost) {
-					if(vert->SET == Q) queue = delQElem(queue, vert);
-					vert->d = minCostVert->d + adj->cost;
-					vert->p = minCostVert->id;
-					queue = addQElem(queue, vert->d, vert);
-					vert->SET = Q;
-				}
-			}
-			adj = adj->nextAdj;
-		}
-	}
-	return verts;
-}
-// ####################### DIALS ##################################################
-
-Vertex **dials(Vertex **verts, INTEGER s){
-	List **buckets = malloc(C*sizeof(List));
-	printf("!");
-	verts[s-1]->d = 0;
-	buckets = addDQElem(buckets, verts[s-1]->d, verts[s-1]);
-	while(getMinElem(buckets) != NULL) {
-		Vertex *minCostVert = getMinElem(buckets);
-		buckets = remDQElem(buckets, minCostVert);
-		minCostVert->SET = S;
-		Adjacent *adjacent = minCostVert->adj;
-		while(adjacent != NULL) {
-			Vertex *vert = adjacent->vert;
-			if(vert->SET != S) {
-				if(vert->d > minCostVert->d + adjacent->cost) {
-					if(vert->SET == Q) buckets = remDQElem(buckets, vert);
-					vert->d = minCostVert->d + adjacent->cost;
-					vert->p = minCostVert->id;
-					buckets = addDQElem(buckets, vert->d, vert);
-					vert->SET = Q;
-				}
-			}
-			adjacent = adjacent->nextAdj;
-		}
-	}
-	return verts;
-}
-
-Vertex **dialsP2P(Vertex **verts, INTEGER s, INTEGER t){
-	List **buckets = (List**)malloc(C*sizeof(List));
-	verts[s-1]->d = 0;
-	buckets = addDQElem(buckets, verts[s-1]->d, verts[s-1]);
-	while(getMinElem(buckets) != NULL) {
-		Vertex *minCostVert = getMinElem(buckets);
-		buckets = remDQElem(buckets, minCostVert);
-		if(minCostVert->id == t) return verts;
-		minCostVert->SET = S;
-		Adjacent *adjacent = minCostVert->adj;
-		while(adjacent != NULL) {
-			Vertex *vert = adjacent->vert;
-			if(vert->SET != S) {
-				if(vert->d > minCostVert->d + adjacent->cost) {
-					if(vert->SET == Q) buckets = remDQElem(buckets, vert);
-					vert->d = minCostVert->d + adjacent->cost;
-					vert->p = minCostVert->id;
-					buckets = addDQElem(buckets, vert->d, vert);
-					vert->SET = Q;
-				}
-			}
-			adjacent = adjacent->nextAdj;
-		}
-	}
-	return verts;
-}
-
-
-// ####################### RADIX HEAPS #############################################
-
-Vertex **radixheap(Vertex **verts, INTEGER s){
-
-	return verts;
-}
-Vertex **radixheapP2P(Vertex **verts, INTEGER s, INTEGER t){
-
-	return verts;
-}
-
-
-// #################################################################################
-/** #######################################################################
-** #################### MAIN MODULE #######################################
-** ########################################################################
-*/
-
-int main(int argc, char *argv[])
-{
-    
-	((errno = programnamechecker(argv)),	_ER_CHCK(errno));
-	((errno = programchecker(argc, argv)),	_ER_CHCK(errno));
-	
-	time(&t1);
-    printf("%s",_LOG_CTIME(t1));
-	
-	// SAVE OUTPUT
-	INTEGER isP2PMethod = 0;
-	INTEGER i = 0;
-	char *dataFile, *sourcesFile, *resultsFile;
-	if((argc-1)%2 == 0 &&  argc > 1) {
-		for(i = 1; i<argc; i++) {
-			if(strcmp(argv[i],"-d") == 0) {
-				i++;
-				dataFile = argv[i];
-			} 
-			else if(strcmp(argv[i], "-ss") == 0) {
-				i++;
-				sourcesFile = argv[i];
-			}
-			else if(strcmp(argv[i], "-p2p") == 0) {
-				i++;
-				isP2PMethod = 1;
-				sourcesFile = argv[i];
-			}
-			else if(strcmp(argv[i], "-oss") == 0 || strcmp(argv[i], "-op2p") == 0) {
-				i++;
-				resultsFile = argv[i];
-			}
-			else {
-				printf("Incorrect parameters: %s!\n", argv[i]);
-				return 0;
-			}
-		}
-		Vertex **verts = readFiles(dataFile);
-		for(i=0; i<V; i++) {
-			Adjacent *conn;
-			conn = verts[i]->adj;
-			while (conn != NULL) {
-				conn = conn->nextAdj;
-			}
-		}
-		if(isP2PMethod) {
-			INTEGER **pairs = readPairs(sourcesFile);
-
-			FILE *file;
-		   	if ((file=fopen(resultsFile, "w"))==NULL) {
-		     		printf ("Output data file cannot be open!\n");
-		     		exit(1);
-		     	}
-			
-			fprintf(file, "f %s %s\n", dataFile, sourcesFile);
-			fprintf(file, "g "I_FORMAT" "I_FORMAT" %d "I_FORMAT"\n", V, E, 0, maxC);
-
-			for(i = 0; i < numOfSourceP2P; i++) {
-				if(PATH_PROB==1){ printf("%d",PATH_PROB);
-				verts = dijkstraP2P(verts, pairs[i][0], pairs[i][1]);}
-				else if(PATH_PROB==2){ printf("%d",PATH_PROB);
-				verts = dialsP2P(verts, pairs[i][0], pairs[i][1]);}
-				else if(PATH_PROB==3){ printf("%d",PATH_PROB);
-				verts = radixheapP2P(verts, pairs[i][0], pairs[i][1]);}
-
-				fprintf(file, "d "I_FORMAT" "I_FORMAT" "I_FORMAT"\n", 
-					pairs[i][0], pairs[i][1], verts[pairs[i][1]-1]->d);
-				verts = initAllVertices(verts);
-			}
-			fclose (file);
-		}
-		else {
-			INTEGER *sources = readSources(sourcesFile);
-			double avgTime;
-
-			FILE *file;
-		   	if ((file=fopen(resultsFile, "w"))==NULL) {
-		     		printf ("Cannot create output data file!\n");
-		     		exit(1);
-		     	}
-		    if(PATH_PROB==1){ printf("%d",PATH_PROB);
-			 fprintf(file, "p res sp ss dijkstra\n");}
-			else if(PATH_PROB==2){ printf("%d",PATH_PROB);
-			 fprintf(file, "p res sp ss dial\n");}
-			else if(PATH_PROB==3){ printf("%d",PATH_PROB);
-			 fprintf(file, "p res sp ss radixheap\n");}
-
-			fprintf(file, "f %s %s\n", dataFile, sourcesFile);
-			fprintf(file, "g "I_FORMAT" "I_FORMAT" %d "I_FORMAT"\n", V, E, 0, maxC);
-
-			struct timeval stop, start;
-			printf("...\n");
-			gettimeofday(&start, NULL);
-			for(i = 0; i < numOfSeeked; i++) {
-				if(PATH_PROB==1){ printf("%d",PATH_PROB);
-					verts = dijkstra(verts, sources[i]);}
-				else if(PATH_PROB==2){ printf("%d",PATH_PROB);
-					verts = dials(verts, sources[i]);}
-				else if(PATH_PROB==3){ printf("%d",PATH_PROB);
-					verts = radixheap(verts, sources[i]);}
-
-				verts = initAllVertices(verts);
-			}
-			gettimeofday(&stop, NULL);
-			double secs = 
-				((double)(stop.tv_usec - start.tv_usec) / 1000 +
-			 	 (double)(stop.tv_sec - start.tv_sec) * 1000);
-			fprintf(file, "t %lf", secs / (double)numOfSeeked);
-			fclose (file);
-		}
-	}
-	time(&t2);
-	printf("%s",_LOG_CTIME(t2));
-	double difference = difftime(t2, t1);
-	if(verbose)
-	(printf("%f with proc.clocks/s = %d\n",difference,CLOCKS_PER_SEC),
-	printf("Clock's ticks in summary: %f\n", difference*CLOCKS_PER_SEC));
-	return errno;
-}
-
-
-
 // #################################################################################
 /** #####################################################################
 ** ############ RUN  SPECS ##############################################

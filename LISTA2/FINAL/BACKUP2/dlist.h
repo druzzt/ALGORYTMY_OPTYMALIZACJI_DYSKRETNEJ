@@ -1,4 +1,3 @@
-#pragma once
 #include <assert.h>
 #define LDECLTYPE(x) char*
 /*#define _SV(elt,list) _tmp = (char*)(list); {char **_alias = (char**)&(list); *_alias = (elt); }

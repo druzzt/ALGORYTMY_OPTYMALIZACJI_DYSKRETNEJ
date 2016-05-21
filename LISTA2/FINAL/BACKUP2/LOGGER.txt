@@ -1,0 +1,4 @@
+Fri May 20 23:38:07 2016
+Fri May 20 23:38:08 2016
+1.000000 with proc.clocks/s = 1000000
+Clock's ticks in summary: 1000000.000000

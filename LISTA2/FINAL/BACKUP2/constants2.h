@@ -1,4 +1,3 @@
-#pragma once
 #ifndef CONSTANTS2_H
 #define CONSTANTS2_H
 // CONSTANTS
