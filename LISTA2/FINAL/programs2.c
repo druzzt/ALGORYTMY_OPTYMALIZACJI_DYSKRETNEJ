@@ -125,28 +125,135 @@ Vertex **dijkstraP2P(Vertex **verts, INTEGER s, INTEGER t) {
 	}
 	return verts;
 }
-Buckets *initBuckets(Vertex **verts){
-	Buckets *bucket; ARLOC_A(bucket, Buckets,(C*V+1));
-	
+/*List *initBuckets(Vertex **verts){
+	List *bucket; ARLOC_A(bucket, Buckets,(C*V+1));
+	INTEGER i=0;
+	for(i=0;i<E;i++){
+		ARLOC_A(bucket[i].bucket,Bucket,1);
+		bucket[i].bucket->next = NULL;
+		bucket[i].bucket->prev = NULL;
+		bucket[i].bucket->idx = i;
+		bucket[i].size = 0;
+	}
 	return bucket;
+}*/
+/*List *pushBackQElem(List **bucket, INTEGER index, INTEGER value){
+	bucket[index].vert
+	return bucket[index];
+}*/	
+
+List *newDQElem(Vertex *vert, List *left, List *right) {
+	List* queue = (List*) malloc(sizeof(List));
+
+	vert->SET = Q;
+	queue->vert = vert;
+	queue->left = left;
+	queue->right = right;
+	return queue;
 }
-Vertex* initV(INTEGER id) {
-	Vertex* vert;
-	ARLOC_A(vert, Vertex,1);
-	vert->id = id+1;
-	vert->d = INF;
-	vert->p = 0;
-	vert->adj = NULL;
-	return vert;
+
+List *deleteListElem(List *list, Vertex *vert) {
+	if(list==NULL) return NULL;
+	else {
+		if(list->vert->id != vert->id)
+		 list->right = deleteListElem(list->right, vert);
+		else {
+			List *left = list->left;
+			List *right = list->right;
+			if(left != NULL) left->right = right;
+			if(right != NULL) right->left = left;
+			free(list);
+			list = right;
+		}
+	}
+	
+	return list;
 }
+
+List **remDQElem(List **buckets, Vertex *vert) {
+	INTEGER minCost = vert->d;
+	buckets[minCost] = deleteListElem(buckets[minCost], vert);
+	
+	return buckets;
+}
+
+List **addDQElem(List **buckets, INTEGER minCost, Vertex *vert) {
+	if(vert->SET != S) {
+		// []
+		if(buckets[minCost] == NULL) 
+			buckets[minCost] = newDQElem(vert, NULL, NULL);
+		else {
+			// () -> A
+			List *newElement = newDQElem(vert, NULL, buckets[minCost]);
+			buckets[minCost]->left = newElement;
+			buckets[minCost] = newElement;	
+		}
+	}
+	return buckets;
+}
+
+Vertex *getMinElem(List **buckets) {
+	INTEGER i;
+	for(i = lastMin; i < C*V; i++) {
+		if(buckets[i] != NULL) {
+			lastMin = i;
+			return buckets[i]->vert;
+		}
+	}
+	lastMin = C*V + 1;
+	return NULL;
+}
+
 Vertex **dials(Vertex **verts, INTEGER s){
-	Buckets *bucket; ARLOC_A(bucket, Buckets, (C*V+1));
-
-
+	List **buckets = malloc(C*V*sizeof(List));
+	verts[s-1]->d = 0;
+	buckets = addDQElem(buckets, verts[s-1]->d, verts[s-1]);
+	while(getMinElem(buckets) != NULL) {
+		Vertex *minCostVert = getMinElem(buckets);
+		buckets = remDQElem(buckets, minCostVert);
+		minCostVert->SET = S;
+		Adjacent *adjacent = minCostVert->adj;
+		while(adjacent != NULL) {
+			Vertex *vert = adjacent->vert;
+			if(vert->SET != S) {
+				if(vert->d > minCostVert->d + adjacent->cost) {
+					if(vert->SET == Q) buckets = remDQElem(buckets, vert);
+					vert->d = minCostVert->d + adjacent->cost;
+					vert->p = minCostVert->id;
+					buckets = addDQElem(buckets, vert->d, vert);
+					vert->SET = Q;
+				}
+			}
+			adjacent = adjacent->nextAdj;
+		}
+	}
 	return verts;
 }
-Vertex **dialsP2P(Vertex **verts, INTEGER s, INTEGER t){
 
+Vertex **dialsP2P(Vertex **verts, INTEGER s, INTEGER t){
+	List **buckets = (List**)malloc(C*V*sizeof(List));
+	verts[s-1]->d = 0;
+	buckets = addDQElem(buckets, verts[s-1]->d, verts[s-1]);
+	while(getMinElem(buckets) != NULL) {
+		Vertex *minCostVert = getMinElem(buckets);
+		buckets = remDQElem(buckets, minCostVert);
+		if(minCostVert->id == t) return verts;
+		minCostVert->SET = S;
+		Adjacent *adjacent = minCostVert->adj;
+		while(adjacent != NULL) {
+			Vertex *vert = adjacent->vert;
+			if(vert->SET != S) {
+				if(vert->d > minCostVert->d + adjacent->cost) {
+					if(vert->SET == Q) buckets = remDQElem(buckets, vert);
+					vert->d = minCostVert->d + adjacent->cost;
+					vert->p = minCostVert->id;
+					buckets = addDQElem(buckets, vert->d, vert);
+					vert->SET = Q;
+				}
+			}
+			adjacent = adjacent->nextAdj;
+		}
+	}
 	return verts;
 }
 
@@ -329,11 +436,9 @@ List *delQElem(List *queue, Vertex *vert) {
 List *addQElem(List *queue, INTEGER cost, Vertex *vert) {
 	List *currentPosition = queue;	
 	if(vert->SET != S) {
-		// []
 		if(queue == NULL) queue = 
 			newQElem(cost, vert, NULL, NULL);
 		else {
-			// () -> A
 			if(currentPosition->minCost >= cost) {
 				List *newElement = 
 				newQElem(cost,
@@ -348,7 +453,6 @@ List *addQElem(List *queue, INTEGER cost, Vertex *vert) {
 				 currentPosition->minCost < cost) {
 					currentPosition = currentPosition->right;
 				}
-				// A -> ()
 				if(currentPosition->minCost < cost) {
 					List *newElement = 
 					newQElem(cost, 
@@ -357,7 +461,6 @@ List *addQElem(List *queue, INTEGER cost, Vertex *vert) {
 									NULL);
 					currentPosition->right = newElement;
 				}
-				// A -> () -> B 
 				else {
 					List *newElement = 
 					newQElem(cost, vert, 
