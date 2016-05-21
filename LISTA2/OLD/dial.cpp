@@ -83,27 +83,23 @@ void Graph::shortestPath(int src, int W)
             int v = (*i).first;
             int weight = (*i).second;
  
-            int du = dist[u].first;
-            int dv = dist[v].first;
- 
             // If there is shorted path to v through u.
-            if (dv > du + weight)
+            if (dist[v].first > dist[u].first + weight)
             {
                 // If dv is not INF then it must be in B[dv]
                 // bucket, so erase its entry using iterator
                 // in O(1)
-                if (dv != INF)
-                    B[dv].erase(dist[v].second);
+                if (dist[v].first != INF)
+                    B[dist[v].first].erase(dist[v].second);
  
                 //  updating the distance
-                dist[v].first = du + weight;
-                dv = dist[v].first;
- 
+                dist[v].first = dist[u].first + weight;
+                
                 // pushing vertex v into updated distance's bucket
-                B[dv].push_front(v);
+                B[dist[v].first].push_front(v);
  
                 // storing updated iterator in dist[v].second
-                dist[v].second = B[dv].begin();
+                dist[v].second = B[dist[v].first].begin();
             }
         }
     }

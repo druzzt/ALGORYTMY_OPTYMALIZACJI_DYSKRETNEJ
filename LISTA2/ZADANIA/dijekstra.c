@@ -73,7 +73,6 @@ List *addToQueue(List *queue, int minCost, Vert *vert) {
 		// []
 		if(queue == NULL) queue = newQueueElement(minCost, vert, NULL, NULL);
 		else {
-			// () -> A
 			if(currentPosition->minCost >= minCost) {
 				List *newElement = newQueueElement(minCost, vert, NULL, currentPosition);
 				currentPosition->left = newElement;
@@ -83,12 +82,10 @@ List *addToQueue(List *queue, int minCost, Vert *vert) {
 				while(currentPosition->right != NULL && currentPosition->minCost < minCost) {
 					currentPosition = currentPosition->right;
 				}
-				// A -> ()
 				if(currentPosition->minCost < minCost) {
 					List *newElement = newQueueElement(minCost, vert, currentPosition, NULL);
 					currentPosition->right = newElement;
 				}
-				// A -> () -> B 
 				else {
 					List *newElement = newQueueElement(minCost, vert, currentPosition->left, currentPosition);	
 					currentPosition->left->right = newElement;
