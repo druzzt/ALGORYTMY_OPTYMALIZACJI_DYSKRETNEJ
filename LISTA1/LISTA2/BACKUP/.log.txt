@@ -1,0 +1,4 @@
+compiled(00:37:33) "djikstra"
+compiled(00:37:33) "arguments ok!"
+compiled(00:37:33) "djikstra"
+compiled(00:37:33) "arguments ok!"

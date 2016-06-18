@@ -2,15 +2,16 @@
 #ifndef CONSTANTS2_H
 #define CONSTANTS2_H
 // CONSTANTS : change the types depending on data you are working on: ###
-#define INTEGER	unsigned long long int // IS INTEGER TYPE FOR STORING DATA
-#define I_FORMAT "%llu"                // IS TYPE FOR READING AND WRITING
+#define INTEGER	 long long int // IS INTEGER TYPE FOR STORING DATA
+#define I_FORMAT "%lld"                // IS TYPE FOR READING AND WRITING
 // ######################################################################
 
 #define VASSIGNP(X,Y)	((X)=(void*)(Y))
 #define PASSIGNV(X,Y)	((X)=(INTEGER)(Y))
 #define INT(X) ((INTEGER)(X))
-#define INF (ULLONG_MAX)
+#define INF (INT_MAX)
 #define UNDEFINED 0
+#define logC	32
 
 #ifndef _CONSTANTS2_H
 #define _CONSTANTS2_H
@@ -23,19 +24,30 @@ volatile INTEGER  V = 0,
 		 lastMin=0;
 #endif
 
+#define PRINT_DEBUG 0
+
+typedef struct heapStruct Heap;
 typedef struct Bucket Bucket;
 typedef struct Buckets Buckets;
 typedef struct Vector Vector;
 typedef struct Vertex Vertex;
 typedef struct Adjacent Adjacent;
+typedef struct Node Node;
 typedef struct List List;
 
 #define EMPTY 0
 #define Q 1
 #define S 2
-
+INTEGER* di;
+INTEGER* pi;
+int *ranges;
+Node** gra;
+Node* nodes;
+INTEGER actually_searched_target;
+INTEGER sum_cost=0;
 struct Bucket {
 	INTEGER idx;
+	INTEGER nr;
 	Bucket *next, *prev;
 };
 struct Buckets {
@@ -70,4 +82,17 @@ struct List {
 	List *left;
 	List *right;
 };
+
+struct Node{
+	INTEGER idx;
+	INTEGER cost;
+	Node* next;
+};
+
+struct heapStruct {
+    INTEGER* heaparray;
+    INTEGER capacity;
+    INTEGER size;
+};
+
 #endif

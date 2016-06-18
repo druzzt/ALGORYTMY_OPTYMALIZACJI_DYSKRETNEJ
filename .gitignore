@@ -1,0 +1,8 @@
+*.gr
+*.ss
+*.res.ss
+*.ss.res
+*.p2p
+*.p2p.res
+*.res.p2p
+ch9*

@@ -1,9 +1,9 @@
 /** #######################################################
 ** * 	@Author: Arkadiusz Lewandowski
 ** *	@Course: Algorytmy optymalizacji dyskretnej
-** *	@Subject: Dijkstra's, Dial's and simple Radix Heap
+** *	@Subject: Dijkstra's, Dial's and Radix Heap
 ** *				implementations in C language.
-** *				Na cześć Edgsara Dijkstry 2002!
+** *				******************************
 **  ####################################################*/
 
 /** @file run: make
@@ -11,29 +11,34 @@
 **	* [dijkstra|dial|radixheap] -d plik_z_danymi.gr -ss zrodla.ss -oss  wyniki.ss.res
 **	* [dijkstra|dial|radixheap] -d plik_z_danymi.gr -p2p pary.p2p -op2p wyniki.p2p.res
 */
-#pragma once
+
 #ifndef PROGRAMS2_C
 #define PROGRAMS2_C
 
 #include "headers2.h"
 #include "constants2.h"
-
-// #################################################################################
-/** ###################################################################
-** ############# ALGORITHM PROTOTYPES #################################
-** ####################################################################
+#include "heap.h"
+#include "RadixHeapsINTRO.txt"
+#include "MentorsBlessings.txt"
+#ifndef INTERFACE
+#define INTERFACE int
+#endif
+// 	#################################################################################
+/** ####################################################################
+** 	############# ALGORITHM PROTOTYPES #################################
+** 	####################################################################
 */
 extern Vertex **dijkstra(Vertex **verts, INTEGER s);
 extern Vertex **dijkstraP2P(Vertex **verts, INTEGER s, INTEGER t);
 extern Vertex **dials(Vertex **verts, INTEGER s);
 extern Vertex **dialsP2P(Vertex **verts, INTEGER s, INTEGER t);
-extern Vertex **radixheap(Vertex **verts, INTEGER s);
-extern Vertex **radixheapP2P(Vertex **verts, INTEGER s, INTEGER t);
+extern INTEGER radixheap(Vertex **verts, INTEGER s);
+extern INTEGER radixheapP2P(INTEGER s, INTEGER t);
 
-// #################################################################################
-/** ###################################################################
-** ############# LIST OPERATION PROTOTYPES ############################
-** ####################################################################
+// 	#################################################################################
+/** ####################################################################
+** 	############# LIST OPERATION PROTOTYPES ############################
+** 	####################################################################
 */
 extern List *newQElem(INTEGER minCost, Vertex *vert,
 			   List *left, List *right);
@@ -43,8 +48,7 @@ extern Vertex *extractMin(List *queue);
 extern Vertex *initVertex(INTEGER id);
 extern Vertex **initAllVertices(Vertex **verts);
 extern Adjacent *initAdjacent(INTEGER parentId, 
-					   INTEGER cost, 
-					   Vertex *vert);
+					   INTEGER cost, Vertex *vert);
 extern Adjacent *addNewAdjacent(Adjacent *adjacent, 
 						 Adjacent *newConnection);
 extern List *newDQElem(Vertex *vert, List *left, List *right);
@@ -76,7 +80,7 @@ Vertex **readFiles(char *dataFile);
 List *initBuckets(Vertex **verts){
 	List *bucket; ARLOC_A(bucket, Buckets,(C*V+1));
 	INTEGER i=0;
-	for(i=0;i<E;i++){
+	for(i=0;i<V;i++){
 		ARLOC_A(bucket[i].vert,Bucket,1);
 		bucket[i].vert->d = UNDEFINED;
 		bucket[i].vert->p = i;
@@ -122,6 +126,9 @@ List *deleteListElem(List *list, Vertex *vert) {
 	}	
 	return list;
 }
+
+
+
 
 /** @complexity: Queue for Dials Buckets
 **				O(1) * O(V) since we iterate through
@@ -270,7 +277,97 @@ List *addQElem(List *queue, INTEGER cost, Vertex *vert) {
 	}
 	return queue;
 }
+/** @complexity: O(1)
+*/
+void addBel(Bucket **b, Bucket* n, int nr){
+	//printf("[addBel:%d],",nr);
+	n->nr = nr;
+	n->next = *b;
+	if(n->next)
+		n->next->prev = n;
+	n->prev=NULL;
+	*b=n;
+}
 
+/** @complexity: O(1)
+*/
+void delBel(Bucket **b, Bucket* n, int nr){
+	if(nr==-1) return;
+		if(*b==n) *b=n->next;
+		if(n->next != NULL) n->next->prev = n->prev;
+		if(n->prev != NULL) n->prev->next = n->next;
+}
+
+/** @complexity: O(V)
+*/
+int *bucketRange(int Cost){
+	int maxRange=1;
+	while(Cost!=0) {Cost=Cost>>1; maxRange++;}
+	maxRange++;
+	int *r = calloc(maxRange,sizeof(int));
+	int j;
+	for(j=0;j<=maxRange; j++) {
+		r[j+1]=1<<j;
+	}
+		r[0]=UNDEFINED;
+		r[maxRange-1]=INF;
+	
+	return r;
+}
+
+/* @complexity: O(logC)
+*/
+void relabel(INTEGER x, int min){
+	ranges[0]=min;
+	int j;
+	for(j=0;j<x;j++){
+		ranges[j+1]=ranges[0]+(1<<j);
+	}
+	ranges[x]=INF;
+}
+
+/** @complexity: O(V)
+*/
+Bucket *initBucketZ(Bucket *q, INTEGER *di, INTEGER *pi){
+	int i;
+	q=calloc(V,sizeof(Bucket));
+	for(i=0;i<V;i++){
+		q[i].idx =i;
+		q[i].nr = -1;
+		di[i]=INF;
+		pi[i]=-1;
+	}
+	return q;
+}
+
+
+Bucket** initBucketB(Bucket** b){
+	return b=calloc(logC,sizeof(Bucket*));
+}
+Bucket* initBucketQ(Bucket* q){
+	return q=calloc(V,sizeof(Bucket));	
+}
+int* makeArray(int* x){
+	return x=calloc(V,sizeof(int));
+}
+/* @complexity: const ~ O(32)
+*/
+void calculateRanges(int r[]){
+	int i;
+	r[0]=0;
+	for(i=0;i<logC-1;i++)
+		r[i+1]=1<<i;
+	r[32]=INF;
+	//return r;
+}
+
+/** @complexity: O(logC)
+*/
+int selectNode(Bucket **b, int it){
+	for(it=it;it<logC && b[it]==NULL; it++)
+		if(it==logC) return it;
+	return it;
+}
 /** @complexity: O(1)
 */
 Vertex *extractMin(List *queue) {
@@ -286,7 +383,7 @@ Vertex* initVertex(INTEGER id) {
 	ARLOC_A(vert, Vertex,1);
 	vert->id = id+1;
 	vert->d = INF;
-	vert->p = 0;
+	vert->p = UNDEFINED;
 	vert->adj = NULL;
 	return vert;
 }
@@ -419,7 +516,7 @@ Vertex **dijkstraP2P(Vertex **verts, INTEGER s, INTEGER t) {
 /** DIAL'S ALGORITHM :
 ** * @complexity:   Significantly faster than casual Dijkstra's
 ** * @complexity: O(nC) + O(1) + O(E)
-** * @complexity: Since when first getMinElem is done, next takes O(n)
+** * @complexity: Since when first getMinElem is done, next takes O(1)
 ** * @complexity: Since when first remDQElem is done, next takes O(1)
 ** * @complexity: Since when first addDQElem is done, next takes O(1)
 ** * @complexity: All together gives O(nC + O(E)) ~ O(E + nC)
@@ -453,7 +550,7 @@ Vertex **dials(Vertex **verts, INTEGER s){
 /** DIAL'S P2P ALGORITHM :
 ** * @complexity:   Significantly faster than casual Dijkstra's
 ** * @complexity: O(nC) + O(1) + 3*O(E)
-** * @complexity: Since when first getMinElem is done, next takes O(n)
+** * @complexity: Since when first getMinElem is done, next takes O(1)
 ** * @complexity: Since when first remDQElem is done, next takes O(1)
 ** * @complexity: Since when first addDQElem is done, next takes O(1)
 ** * @complexity: All together gives O(nC + O(E)) ~ O(E + nC)
@@ -484,6 +581,7 @@ Vertex **dialsP2P(Vertex **verts, INTEGER s, INTEGER t){
 			adjacent = adjacent->nextAdj;
 		}
 	}
+	
 	return verts;
 }
 
@@ -524,7 +622,8 @@ size(B) = nC + 1.
 Observe that the bucket sizes satisfy the following important inequality: j-
 Z size(i) > min{size(j), C + 1} for 2 j < B. (1)
 Each bucket also has a range that is an interval of integers. Initially the ranges 
-of the buckets partition the interval [0 . . nC + ]. In general the ranges partition the interval [dmin .. nC + ], where dmin is the maximum label of a scanned node.
+of the buckets partition the interval [0 . . nC + ]. In general the ranges partition 
+the interval [dmin .. nC + ], where dmin is the maximum label of a scanned node.
 For each bucket i the upper bound u(i) of its interval is maintained; the range of 
 bucket i is range(i) = [u(i - 1) + I .. u(i)], with the conventions that
 u(0) = dmin - I and rnge(i) = 0 if u(i - ) Ž u(i). Whereas the sizes of all
@@ -568,14 +667,101 @@ The space required as O(m + log C). Johnson [10], using the same data structure,
 obtained a bound worse by a factor of log log C because he used binary search 
 instead of sequential scan to reinsert vertices into buckets.
       */
-Vertex **radixheap(Vertex **verts, INTEGER s){
 
-	return verts;
-}
-Vertex **radixheapP2P(Vertex **verts, INTEGER s, INTEGER t){
 
-	return verts;
+//INTEGER radixheap(Vertex **verts, INTEGER s){
+INTEGER radixheap(Vertex **verts,INTEGER s){
+	printf("S:%d\n",s);
+    Bucket** b;  Bucket* q;
+    b=initBucketB(b);
+    q=initBucketQ(q);
+    int* d;   int* p; int i = 0; int k;
+    d=makeArray(d);
+    p=makeArray(p);
+    initBuckets8(int, d,p,q,V,INF);
+    int ranges[33];
+    calculateRanges(ranges);
+    addBel(&b[0], &q[s], 0);
+    d[s] = 0;
+    //for(k=0;k<=V;k++) printf("|%d=%d, %d;",k,d[k],p[k]);
+    int labeled=0;
+    //for ( labeled = 0; labeled < V; labeled++) {
+    whileAllVerticesNot(labeled,V){
+       // printf("{labeled:%d; 1i:%d,",labeled,i);
+       continueTillNextNonEmptyBucket(i,b);
+        //printf("32; 2i:%d},",i);
+       nonEmptyBucketFound(i,ranges,b){
+            int no;
+            int min;
+            Bucket* p;
+            extractMinVertex(no,min,b,d,i,p);
+            relabelBuckets(ranges,i,INF,min);
+            wipeWholeBucketAndPutToTheProper(b,
+            		delBel,q,i,d,ranges,addBel);  
+        }
+        Bucket* minimal = b[i];
+        int min_idx = minimal->idx;
+        delBel(&b[i], &q[min_idx], i);
+       //getFirstVertex(minimal,b,i,delBel,q);
+        Node *n; updateAll(n,gra,d,min_idx,delBel,addBel,dest,ranges);
+    }
+
+     /*for (int i = 0; i < V; i++) {
+         printf("%d %d %d\n", i, d[i], p[i]);
+     }*/
+     //printf("%d\n",d[V-1] );
+    
+    wipePointers(d,p,q,b);
+    return 0;
 }
+
+
+INTEGER radixheapP2P(int s, int t){
+    Bucket** b;  Bucket* q;
+    b=initBucketB(b);
+    q=initBucketQ(q);
+    int* d;   int* p; int i = 0; int k;
+    d=makeArray(d);
+    p=makeArray(p);
+    initBuckets8(int, d,p,q,V,INF);
+    int ranges[33];
+    calculateRanges(ranges);
+    
+    addBel(&b[0], &q[s], 0);
+    d[s] = 0;
+    
+    //for(k=0;k<=V;k++) printf("|%d=%d, %d;",k,d[k],p[k]);
+    int labeled=0;
+    //for ( labeled = 0; labeled < V; labeled++) {
+    whileAllVerticesNot(labeled,V){
+       // printf("{labeled:%d; 1i:%d,",labeled,i);
+       continueTillNextNonEmptyBucket(i,b);
+        //printf("32; 2i:%d},",i);
+       nonEmptyBucketFound(i,ranges,b){
+            int no;
+            int min;
+            Bucket* p;
+            extractMinVertex(no,min,b,d,i,p);
+            relabelBuckets(ranges,i,INF,min);
+            wipeWholeBucketAndPutToTheProper(b,
+            		delBel,q,i,d,ranges,addBel);  
+        }
+
+        Bucket* minimal = b[i];
+        int min_idx = minimal->idx;
+        delBel(&b[i], &q[min_idx], i);
+       //getFirstVertex(minimal,b,i,delBel,q);
+
+        Node *n; updateAll(n,gra,d,min_idx,delBel,addBel,dest,ranges);
+        if (min_idx == t)
+            break;
+    }
+
+    int COST = d[t];
+    wipePointers(d,p,q,b);
+    return COST;
+}
+
 
 
 // #################################################################################
@@ -583,13 +769,15 @@ Vertex **radixheapP2P(Vertex **verts, INTEGER s, INTEGER t){
 ** #################### MAIN MODULE #######################################
 ** ########################################################################
 */
+// 					EXTERN INTERFACE
 
-int main(int argc, char *argv[])
+INTERFACE shortest_path_problem(int argc, char *argv[])
 {
     
 	((errno = programnamechecker(argv)),	_ER_CHCK(errno));
 	((errno = programchecker(argc, argv)),	_ER_CHCK(errno));
-	
+	if(errno!=SUCCESS) return FAILURE;
+
 	time(&t1);
     printf("%s %s %s %s, Start:%s",argv[0],argv[2],argv[4],argv[6],_LOG_CTIME(t1));
 	
@@ -631,7 +819,7 @@ int main(int argc, char *argv[])
 		}
 		if(isP2PMethod) {
 			INTEGER **pairs = readPairs(sourcesFile);
-
+			//printf(".");
 			FILE *file;
 		   	if ((file=fopen(resultsFile, "w"))==NULL) {
 		     		printf ("Output data file cannot be open!\n");
@@ -640,23 +828,32 @@ int main(int argc, char *argv[])
 			
 			fprintf(file, "f %s %s\n", dataFile, sourcesFile);
 			fprintf(file, "g "I_FORMAT" "I_FORMAT" %d "I_FORMAT"\n", V, E, 0, maxC);
-
+			//printf("P2P");
+			int cc;
 			for(i = 0; i < numOfSourceP2P; i++) {
 				if(PATH_PROB==1){ //printf("%d",PATH_PROB);
 				verts = dijkstraP2P(verts, pairs[i][0], pairs[i][1]);}
 				else if(PATH_PROB==2){ //printf("%d",PATH_PROB);
 				verts = dialsP2P(verts, pairs[i][0], pairs[i][1]);}
 				else if(PATH_PROB==3){ //printf("%d",PATH_PROB);
-				verts = radixheapP2P(verts, pairs[i][0], pairs[i][1]);}
-
-				fprintf(file, "d "I_FORMAT" "I_FORMAT" "I_FORMAT"\n", 
+				//printf("%d %d\n",sources[i],sinks[i]);
+				printf("PATHPROB=%d\n",PATH_PROB);
+				cc = radixheapP2P(sources[i],sinks[i]);}
+				//verts = radixheapP2P(verts, pairs[i][0]-1, pairs[i][1]-1);}
+				if(PATH_PROB==3){
+					fprintf(file, "d "I_FORMAT" "I_FORMAT" "I_FORMAT"\n", 
+					sources[i]+1, sinks[i]+1, cc);
+				}else{
+					fprintf(file, "d "I_FORMAT" "I_FORMAT" "I_FORMAT"\n", 
 					pairs[i][0], pairs[i][1], verts[pairs[i][1]-1]->d);
+				}
 				verts = initAllVertices(verts);
 			}
 			fclose (file);
 		}
 		else {
 			INTEGER *sources = readSources(sourcesFile);
+			//printf(".");
 			double avgTime;
 
 			FILE *file;
@@ -672,20 +869,24 @@ int main(int argc, char *argv[])
 			 fprintf(file, "p res sp ss radixheap\n");}
 
 			fprintf(file, "f %s %s\n", dataFile, sourcesFile);
-			fprintf(file, "g "I_FORMAT" "I_FORMAT" %d "I_FORMAT"\n", V, E, 0, maxC);
+			fprintf(file, "g "I_FORMAT" "I_FORMAT" %d "I_FORMAT"\n", V, E, minC, maxC);
 
 			struct timeval stop, start;
 			//printf("...\n");
 			gettimeofday(&start, NULL);
 			for(i = 0; i < numOfSeeked; i++) {
+				INTEGER wynik;
 				if(PATH_PROB==1){ //printf("%d",PATH_PROB);
 					verts = dijkstra(verts, sources[i]);}
 				else if(PATH_PROB==2){ //printf("%d",PATH_PROB);
 					verts = dials(verts, sources[i]);}
 				else if(PATH_PROB==3){ //printf("%d",PATH_PROB);
-					verts = radixheap(verts, sources[i]);}
-
-				verts = initAllVertices(verts);
+					wynik= radixheap(verts, sources[i]);
+					printf("end?");}
+					
+					if(PATH_PROB==3);
+					else
+					verts = initAllVertices(verts);
 			}
 			gettimeofday(&stop, NULL);
 			double secs = 
@@ -700,10 +901,14 @@ int main(int argc, char *argv[])
 	double difference = difftime(t2, t1);
 	if(verbose)
 	(/*printf("%f with proc.clocks/s = %d\n",difference,CLOCKS_PER_SEC)*/NULL,
-	printf("Clock's ticks in summary: %f\n", difference*CLOCKS_PER_SEC));
+	printf("In summary: %f\n", difference/CLOCKS_PER_SEC));
 	return errno;
 }
 
+
+int main(int argc, char* argv[]){
+	return (shortest_path_problem(argc, argv));
+}
 
 // #################################################################################
 /** #########################################################################
@@ -715,9 +920,10 @@ Vertex **readFiles(char *dataFile) {
 	INTEGER *graph, i = 0;
 	Vertex **verts;
 	FILE *file;
+
 	char lineType, buffer[128];
    	if ((file=fopen(dataFile, "r"))==NULL) {
-     		printf ("Cannot open data file!\n");
+     		printf ("Cannot open data file! readFiles\n");
      		exit(1);
      	}
    	while (fscanf(file, "%c", &lineType) != EOF)
@@ -725,8 +931,13 @@ Vertex **readFiles(char *dataFile) {
 		if(lineType == 'c') fgets(buffer, sizeof(buffer), file);
 		else if(lineType == 'p') {
 			fscanf(file, " sp "I_FORMAT" "I_FORMAT"", &V, &E);
+			
+			ranges=bucketRange(INF);
 			graph = malloc(V*sizeof(INTEGER));
 			verts = malloc(V*sizeof(Vertex));
+			gra = calloc(V,sizeof(Node*));
+			nodes=calloc(E,sizeof(Node));
+			sources=calloc(V,sizeof(INTEGER));
 			INTEGER j;
 			for(j = 0; j<V; j++){
 			 verts[j] = initVertex(j);
@@ -736,10 +947,17 @@ Vertex **readFiles(char *dataFile) {
 		else if(lineType == 'a') {
 			INTEGER a, b, cost;
 			fscanf(file, " "I_FORMAT" "I_FORMAT" "I_FORMAT"", &a, &b, &cost);
+			nodes[i].next = gra[a-1];
+			gra[a-1]=&nodes[i];
+			nodes[i].idx = b-1;
+			nodes[i].cost = cost;
+			//printf(""I_FORMAT" "I_FORMAT" \n",nodes[i].idx, nodes[i].cost); // TUTAJ DEBUG
 			Adjacent *newConnection = initAdjacent(a, cost, verts[b-1]);
 			if(cost > maxC) maxC = cost;
+			if(cost < minC) minC = cost;
 			verts[a-1]->adj = addNewAdjacent(verts[a-1]->adj, newConnection);
 			if(graph[b-1] < cost) graph[b-1]=cost;
+			i++;
 		}		
 		else if(lineType != ' ' && lineType != '\t' && lineType != '\n') {
 			printf("Incorrect data!\n");
@@ -755,7 +973,7 @@ INTEGER **readPairs(char *dataFile) {
 	FILE *file;
 	char lineType, buffer[128];
    	if ((file=fopen(dataFile, "r"))==NULL) {
-     		printf ("Cannot open data file!\n");
+     		printf ("Cannot open data file! readPairs\n");
      		exit(1);
      	}
 	i = 0;
@@ -765,10 +983,14 @@ INTEGER **readPairs(char *dataFile) {
 		else if(lineType == 'p') {
 			fscanf(file, " aux sp p2p "I_FORMAT"", &numOfSourceP2P);
 			pairs = (INTEGER**)malloc(numOfSourceP2P*2*sizeof(INTEGER));
+			sources=calloc(numOfSourceP2P,sizeof(INTEGER));
+			sinks = calloc(numOfSourceP2P,sizeof(int));
 		}
 		else if(lineType == 'q') {
 			pairs[i] = (INTEGER*)malloc(2*sizeof(INTEGER));
 			fscanf(file, " "I_FORMAT" "I_FORMAT"", &pairs[i][0], &pairs[i][1]);
+			sources[i]=pairs[i][0]-1;
+			sinks[i]=pairs[i][1]-1;
 			i++;
 		}		
 		else if(lineType != ' ' && lineType != '\t' && lineType != '\n') {
@@ -780,11 +1002,11 @@ INTEGER **readPairs(char *dataFile) {
 }
 
 INTEGER *readSources(char *dataFile) {
-	INTEGER *sources, i = 0;
+	INTEGER i = 0;
 	FILE *file;
 	char lineType, buffer[128];
    	if ((file=fopen(dataFile, "r"))==NULL) {
-     		printf ("Cannot open data file!\n");
+     		printf ("Cannot open data file! readSources\n");
      		exit(1);
      	}
 	i=0;
@@ -793,10 +1015,12 @@ INTEGER *readSources(char *dataFile) {
 		if(lineType == 'c') fgets(buffer, sizeof(buffer), file);
 		else if(lineType == 'p') {
 			fscanf(file, " aux sp ss "I_FORMAT"", &numOfSeeked);
-			sources = (INTEGER*)malloc(numOfSeeked*sizeof(INTEGER));
+			sources = calloc(numOfSeeked,sizeof(INTEGER));
 		}
 		else if(lineType == 's') {
-			fscanf(file, " "I_FORMAT"", &sources[i]);
+			INTEGER s;
+			fscanf(file, " "I_FORMAT"", &s);
+			sources[i]=s-1;
 			i++;
 		}
 		else if(lineType != ' ' && lineType != '\t' && lineType != '\n') {
@@ -879,3 +1103,8 @@ int programnamechecker(char *argv[])
 
 
 #endif
+
+
+
+
+

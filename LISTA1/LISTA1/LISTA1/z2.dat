@@ -1,0 +1,16 @@
+data;
+
+
+param max_time := 20;
+param n := 6;
+param s:= 1;
+param t:=6;
+param : A :   c time :=
+       1 2   1  1
+       1 5   4  2
+       2 3   2  1
+       2 4    8 4
+       3 4   5  3
+       5 6   4  4;
+end;
+
